@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FitDeck – Receitas Fitness</title>
+    <meta name="description"
+        content="Descubra receitas fitness saudáveis no estilo baralho interativo. Embaralhe, selecione e adicione suas próprias receitas." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+    <!-- ========== HEADER ========== -->
+    <header class="site-header">
+        <div class="logo">
+            <span class="logo-icon">🃏</span>
+            <span class="logo-text">Fit<strong>Deck</strong></span>
+        </div>
+        <p class="header-tagline">Embaralhe. Escolha. Alimente-se bem.</p>
+    </header>
+
+    <!-- ========== MAIN ========== -->
+    <main class="app-container">
+
+        <!-- Card Deck Area -->
+        <div class="deck-wrapper" id="deck-wrapper">
+            <div class="deck" id="deck"></div>
+        </div>
+
+        <!-- Deck counter -->
+        <div class="deck-info">
+            <span id="deck-count">0</span> receitas no baralho
+        </div>
+
+        <!-- Controls -->
+        <div class="controls" id="controls">
+            <button class="btn btn-secondary" id="btn-shuffle" title="Embaralhar o baralho">
+                <span class="btn-icon">🔀</span> Embaralhar
+            </button>
+            <button class="btn btn-primary" id="btn-random" title="Sortear uma receita aleatória">
+                <span class="btn-icon">🎲</span> Sortear Receita
+            </button>
+            <button class="btn btn-accent" id="btn-add" title="Adicionar nova receita">
+                <span class="btn-icon">✨</span> Nova Receita
+            </button>
+        </div>
+
+    </main>
+
+    <!-- ========== CARD DETAIL MODAL ========== -->
+    <div class="modal-overlay" id="detail-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal modal-detail">
+            <button class="modal-close" id="detail-close" aria-label="Fechar">&times;</button>
+
+            <div class="modal-detail-header">
+                <div class="modal-emoji" id="modal-emoji"></div>
+                <div>
+                    <div class="modal-category" id="modal-category"></div>
+                    <h2 class="modal-title" id="modal-title"></h2>
+                    <div class="modal-prep-time" id="modal-prep-time"></div>
+                </div>
+            </div>
+
+            <div class="macro-grid" id="modal-macros"></div>
+
+            <div class="modal-section">
+                <h3>🥗 Ingredientes</h3>
+                <ul class="ingredient-list" id="modal-ingredients"></ul>
+            </div>
+
+            <div class="modal-section">
+                <h3>👨‍🍳 Modo de Preparo</h3>
+                <p class="modal-instructions" id="modal-instructions"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== ADD RECIPE MODAL ========== -->
+    <div class="modal-overlay" id="add-modal" role="dialog" aria-modal="true" aria-labelledby="add-modal-title">
+        <div class="modal modal-add">
+            <button class="modal-close" id="add-close" aria-label="Fechar">&times;</button>
+            <h2 class="modal-title" id="add-modal-title">✨ Nova Receita</h2>
+            <p class="modal-subtitle">Preencha os campos e a receita será adicionada ao baralho automaticamente.</p>
+
+            <form id="add-recipe-form" novalidate>
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label for="f-name">Nome da Receita *</label>
+                        <input type="text" id="f-name" placeholder="Ex: Frango Grelhado com Quinoa" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="f-category">Categoria *</label>
+                        <select id="f-category" required>
+                            <option value="">Selecione...</option>
+                            <option value="Café da Manhã">☀️ Café da Manhã</option>
+                            <option value="Almoço">🥗 Almoço</option>
+                            <option value="Jantar">🌙 Jantar</option>
+                            <option value="Lanche">🍎 Lanche</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="f-emoji">Emoji da Carta</label>
+                        <input type="text" id="f-emoji" placeholder="🍽️" maxlength="4" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="f-calories">Calorias (kcal) *</label>
+                        <input type="number" id="f-calories" placeholder="350" min="1" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="f-protein">Proteína (g) *</label>
+                        <input type="number" id="f-protein" placeholder="30" min="0" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="f-carbs">Carboidratos (g) *</label>
+                        <input type="number" id="f-carbs" placeholder="40" min="0" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="f-fat">Gorduras (g) *</label>
+                        <input type="number" id="f-fat" placeholder="10" min="0" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="f-preptime">Tempo de Preparo (min)</label>
+                        <input type="number" id="f-preptime" placeholder="20" min="1" />
+                    </div>
+
+                    <div class="form-group full">
+                        <label for="f-ingredients">Ingredientes *</label>
+                        <textarea id="f-ingredients" rows="4"
+                            placeholder="Um ingrediente por linha:&#10;200g de frango&#10;1 xícara de quinoa&#10;..."
+                            required></textarea>
+                    </div>
+
+                    <div class="form-group full">
+                        <label for="f-instructions">Modo de Preparo *</label>
+                        <textarea id="f-instructions" rows="4" placeholder="Descreva o passo a passo do preparo..."
+                            required></textarea>
+                    </div>
+                </div>
+
+                <div id="form-error" class="form-error" aria-live="polite"></div>
+
+                <button type="submit" class="btn btn-primary btn-full">
+                    <span class="btn-icon">🃏</span> Adicionar ao Baralho
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Random card spotlight overlay -->
+    <div class="spotlight-overlay" id="spotlight-overlay">
+        <div class="spotlight-card-container" id="spotlight-container"></div>
+        <button class="btn btn-secondary spotlight-dismiss" id="spotlight-dismiss">Ver no Baralho</button>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
