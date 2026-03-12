@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BLAST Framework — Vibecode System</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300;1,9..144,700&display=swap" rel="stylesheet">
+<style>
+/* ─── TEORIA DAS CORES ───────────────────────────────────────────
+   Fundo escuro: #0B0F14  (quase-preto azulado)
+   Cards de leitura: #151C25  (azul-carvão, +luminosidade +8%)
+   Texto principal: #EDF2F7  (branco quente, não ofusca)
+   Texto corpo: #B8C8D8    (azul-acinzentado claro — contraste 7:1)
+   Texto secundário: #7A90A4 (médio — contraste 4.5:1 no card)
+   Accent cyan: #38E8D4    (complementar ao laranja, triadico)
+   Accent âmbar: #F5A623   (quente, contraste com fundo escuro)
+   Accent lilás: #B57BF7   (análogo ao azul, suave)
+   Accent verde: #4ADE80
+   ─────────────────────────────────────────────────────────────── */
+:root {
+  --bg:        #0B0F14;
+  --bg2:       #0F1520;
+  --card:      #151C25;
+  --card-hi:   #1C2736;
+  --border:    #243040;
+  --border-hi: #334d6b;
+
+  --text:      #EDF2F7;
+  --body:      #B8C8D8;
+  --muted:     #7A90A4;
+  --faint:     #3D5066;
+
+  --cyan:      #38E8D4;
+  --amber:     #F5A623;
+  --violet:    #B57BF7;
+  --green:     #4ADE80;
+  --red:       #F87171;
+
+  --r: 'Fraunces', Georgia, serif;
+  --s: 'DM Sans', sans-serif;
+  --m: 'Space Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--s);
+  font-size: 17px;
+  line-height: 1.6;
+  overflow-x: hidden;
+  cursor: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── CURSOR ───────────────────────── */
+.cur { position:fixed; width:10px; height:10px; background:var(--cyan); border-radius:50%; pointer-events:none; z-index:9999; transform:translate(-50%,-50%); transition:width .15s,height .15s; mix-blend-mode:screen; }
+.cur-r { position:fixed; width:36px; height:36px; border:1px solid rgba(56,232,212,.35); border-radius:50%; pointer-events:none; z-index:9998; transform:translate(-50%,-50%); transition:width .3s,height .3s; }
+
+/* ── BG TEXTURE ───────────────────── */
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background-image:
+    linear-gradient(rgba(56,232,212,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56,232,212,.025) 1px, transparent 1px);
+  background-size:72px 72px;
+  pointer-events:none; z-index:0;
+}
+
+/* ── GLOWS ────────────────────────── */
+.glow { position:fixed; border-radius:50%; filter:blur(140px); pointer-events:none; z-index:0; opacity:.08; }
+.g1 { width:700px;height:700px;background:var(--cyan);top:-250px;right:-150px;animation:drift 14s ease-in-out infinite; }
+.g2 { width:500px;height:500px;background:var(--violet);bottom:-100px;left:-100px;animation:drift 18s ease-in-out infinite reverse; }
+.g3 { width:350px;height:350px;background:var(--amber);top:55%;left:35%;animation:drift 11s ease-in-out infinite 2s; }
+
+@keyframes drift {
+  0%,100%{transform:translate(0,0)}
+  40%{transform:translate(28px,-22px)}
+  70%{transform:translate(-18px,24px)}
+}
+
+/* ── LAYOUT ───────────────────────── */
+.wrap { max-width:1120px; margin:0 auto; padding:0 48px; position:relative; z-index:1; }
+
+/* ── NAV ──────────────────────────── */
+nav {
+  position:fixed; top:0; left:0; right:0; z-index:200;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:18px 48px;
+  background:rgba(11,15,20,.82);
+  backdrop-filter:blur(24px);
+  border-bottom:1px solid rgba(36,48,64,.8);
+}
+.nav-logo { font-family:var(--m); font-size:13px; letter-spacing:5px; color:var(--cyan); font-weight:700; }
+.nav-links { display:flex; gap:36px; list-style:none; }
+.nav-links a { font-family:var(--m); font-size:10px; color:var(--muted); text-decoration:none; letter-spacing:2.5px; text-transform:uppercase; transition:color .2s; }
+.nav-links a:hover { color:var(--cyan); }
+
+/* ── HERO ─────────────────────────── */
+header {
+  min-height:100vh; display:flex; flex-direction:column; justify-content:center;
+  padding:120px 0 80px; position:relative;
+}
+
+.hero-eyebrow {
+  font-family:var(--m); font-size:11px; letter-spacing:4px; color:var(--cyan);
+  border:1px solid rgba(56,232,212,.25); display:inline-flex; align-items:center; gap:10px;
+  padding:7px 16px; margin-bottom:36px;
+  animation:up .8s ease both;
+}
+.hero-eyebrow-dot { width:6px;height:6px;background:var(--cyan);border-radius:50%;animation:pulse 2s ease-in-out infinite; }
+
+.hero-title {
+  font-family:var(--r);
+  font-size:clamp(64px, 10vw, 140px);
+  font-weight:900; line-height:.92; letter-spacing:-3px;
+  animation:up .8s ease .12s both;
+}
+.hero-title em { font-style:italic; color:var(--cyan); }
+.hero-title .ghost {
+  -webkit-text-stroke:2px rgba(56,232,212,.4);
+  color:transparent; display:block;
+}
+
+.hero-lead {
+  margin-top:36px;
+  font-size:18px; line-height:1.75; color:var(--body);
+  max-width:580px;
+  animation:up .8s ease .24s both;
+}
+.hero-lead strong { color:var(--text); font-weight:600; }
+
+.hero-stats {
+  display:flex; gap:48px; margin-top:52px;
+  animation:up .8s ease .36s both;
+}
+.stat-n { font-family:var(--r); font-size:48px; font-weight:700; color:var(--text); line-height:1; }
+.stat-l { font-family:var(--m); font-size:10px; letter-spacing:2px; color:var(--muted); margin-top:4px; text-transform:uppercase; }
+
+.scroll-hint {
+  position:absolute; bottom:40px; left:48px;
+  display:flex; align-items:center; gap:12px;
+  font-family:var(--m); font-size:10px; color:var(--faint); letter-spacing:3px;
+  animation:up .8s ease .6s both;
+}
+.sh-line { width:56px; height:1px; background:linear-gradient(90deg,var(--cyan),transparent); animation:pulse 2s ease-in-out infinite; }
+
+/* ── SECTION BASE ─────────────────── */
+section { padding:112px 0; }
+.sec-eyebrow { font-family:var(--m); font-size:10px; letter-spacing:4px; color:var(--amber); text-transform:uppercase; margin-bottom:14px; }
+.sec-title { font-family:var(--r); font-size:clamp(36px,4.5vw,52px); font-weight:700; line-height:1.1; letter-spacing:-1px; margin-bottom:56px; }
+.sec-title span { color:var(--cyan); font-style:italic; }
+
+/* ── BLAST ACCORDION ──────────────── */
+.blast-list { display:flex; flex-direction:column; gap:3px; }
+
+.bstep {
+  display:grid; grid-template-columns:100px 1fr;
+  background:var(--card); border:1px solid var(--border);
+  overflow:hidden; cursor:pointer;
+  transition:border-color .25s, background .25s;
+  position:relative;
+}
+.bstep:hover { border-color:var(--border-hi); background:var(--card-hi); }
+.bstep.open { border-color:var(--border-hi); }
+
+.bstep::after { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; opacity:0; transition:opacity .3s; }
+.bstep.open::after { opacity:1; }
+.bstep[data-c="cyan"]::after   { background:var(--cyan); }
+.bstep[data-c="violet"]::after { background:var(--violet); }
+.bstep[data-c="amber"]::after  { background:var(--amber); }
+.bstep[data-c="green"]::after  { background:var(--green); }
+.bstep[data-c="red"]::after    { background:var(--red); }
+
+.bstep-letter {
+  display:flex; align-items:center; justify-content:center;
+  border-right:1px solid var(--border);
+  font-family:var(--r); font-weight:900; font-size:72px; line-height:1;
+  padding:36px 16px;
+  transition:font-size .2s;
+}
+.bstep:hover .bstep-letter { font-size:76px; }
+.bstep[data-c="cyan"]   .bstep-letter { color:var(--cyan); }
+.bstep[data-c="violet"] .bstep-letter { color:var(--violet); }
+.bstep[data-c="amber"]  .bstep-letter { color:var(--amber); }
+.bstep[data-c="green"]  .bstep-letter { color:var(--green); }
+.bstep[data-c="red"]    .bstep-letter { color:var(--red); }
+
+.bstep-body { padding:32px 40px; }
+
+.bstep-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.bstep-name { font-family:var(--r); font-size:26px; font-weight:700; letter-spacing:-.3px; }
+.bstep-badge {
+  font-family:var(--m); font-size:10px; letter-spacing:2px; color:var(--muted);
+  border:1px solid var(--border); padding:4px 10px;
+}
+
+.bstep-summary {
+  font-size:16px; line-height:1.75;
+  color:var(--body);
+  max-width:680px;
+}
+
+.bstep-expand {
+  max-height:0; overflow:hidden;
+  transition:max-height .45s cubic-bezier(.4,0,.2,1), opacity .35s ease;
+  opacity:0;
+}
+.bstep.open .bstep-expand { max-height:400px; opacity:1; }
+
+.bstep-inner {
+  margin-top:24px; padding-top:24px;
+  border-top:1px solid var(--border);
+}
+
+.bstep-detail {
+  font-size:15px; line-height:1.85;
+  color:var(--body);
+  margin-bottom:20px; max-width:640px;
+}
+
+.chips { display:flex; flex-wrap:wrap; gap:8px; }
+.chip {
+  font-family:var(--m); font-size:11px; letter-spacing:1px;
+  padding:5px 14px; border:1px solid var(--border);
+  color:var(--muted); transition:all .2s;
+}
+.chip:hover { border-color:var(--cyan); color:var(--cyan); }
+
+/* ── TOOLS SECTION ────────────────── */
+.tools-grid {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:3px;
+}
+
+.tool {
+  background:var(--card); border:1px solid var(--border);
+  padding:40px 36px; position:relative; overflow:hidden;
+  transition:background .25s, border-color .25s;
+}
+.tool:hover { background:var(--card-hi); border-color:var(--border-hi); }
+
+.tool-bar {
+  position:absolute; top:0; left:0; right:0; height:3px;
+  transform:scaleX(0); transform-origin:left;
+  transition:transform .35s ease;
+}
+.tool:hover .tool-bar { transform:scaleX(1); }
+.tool[data-c="cyan"] .tool-bar   { background:var(--cyan); }
+.tool[data-c="violet"] .tool-bar { background:var(--violet); }
+.tool[data-c="amber"] .tool-bar  { background:var(--amber); }
+.tool[data-c="green"] .tool-bar  { background:var(--green); }
+.tool[data-c="red"] .tool-bar    { background:var(--red); }
+
+.tool-emoji { font-size:30px; margin-bottom:18px; }
+.tool-name { font-family:var(--r); font-size:22px; font-weight:700; margin-bottom:6px; }
+.tool-role { font-family:var(--m); font-size:10px; letter-spacing:2.5px; text-transform:uppercase; margin-bottom:16px; }
+.tool[data-c="cyan"]   .tool-role { color:var(--cyan); }
+.tool[data-c="violet"] .tool-role { color:var(--violet); }
+.tool[data-c="amber"]  .tool-role { color:var(--amber); }
+.tool[data-c="green"]  .tool-role { color:var(--green); }
+.tool[data-c="red"]    .tool-role { color:var(--red); }
+
+.tool-desc {
+  font-size:15px; line-height:1.85;
+  color:var(--body);
+}
+
+/* ── ARCHITECTURE ─────────────────── */
+.arch { display:grid; grid-template-columns:repeat(3,1fr); gap:3px; }
+
+.arch-card {
+  background:var(--card); border:1px solid var(--border);
+  padding:48px 36px; text-align:center;
+  position:relative; overflow:hidden;
+  transition:transform .3s, box-shadow .3s, background .25s;
+}
+.arch-card:hover { transform:translateY(-6px); background:var(--card-hi); box-shadow:0 16px 48px rgba(0,0,0,.4); }
+
+.arch-ring {
+  width:68px; height:68px; border-radius:50%; font-size:26px;
+  display:flex; align-items:center; justify-content:center;
+  margin:0 auto 24px;
+}
+.arch-card:nth-child(1) .arch-ring { background:rgba(56,232,212,.1); border:1px solid rgba(56,232,212,.3); }
+.arch-card:nth-child(2) .arch-ring { background:rgba(181,123,247,.1); border:1px solid rgba(181,123,247,.3); }
+.arch-card:nth-child(3) .arch-ring { background:rgba(245,166,35,.1);  border:1px solid rgba(245,166,35,.3); }
+
+.arch-num { font-family:var(--m); font-size:10px; letter-spacing:3px; color:var(--faint); margin-bottom:20px; }
+.arch-name { font-family:var(--r); font-size:24px; font-weight:700; margin-bottom:8px; }
+.arch-tech { font-family:var(--m); font-size:10px; letter-spacing:2px; margin-bottom:16px; }
+.arch-card:nth-child(1) .arch-tech { color:var(--cyan); }
+.arch-card:nth-child(2) .arch-tech { color:var(--violet); }
+.arch-card:nth-child(3) .arch-tech { color:var(--amber); }
+
+.arch-desc { font-size:14px; line-height:1.85; color:var(--body); }
+
+/* ── PROCESS ──────────────────────── */
+.process { display:grid; grid-template-columns:repeat(2,1fr); gap:3px; }
+
+.proc {
+  background:var(--card); border:1px solid var(--border);
+  padding:44px; display:flex; gap:28px;
+  transition:background .25s, border-color .25s;
+}
+.proc:hover { background:var(--card-hi); border-color:var(--border-hi); }
+
+.proc-n {
+  font-family:var(--r); font-size:52px; font-weight:900; line-height:1;
+  color:rgba(56,232,212,.12); flex-shrink:0; width:56px; text-align:right;
+  transition:color .3s; user-select:none;
+}
+.proc:hover .proc-n { color:rgba(56,232,212,.22); }
+
+.proc-name { font-family:var(--r); font-size:20px; font-weight:700; margin-bottom:10px; }
+
+.proc-desc { font-size:15px; line-height:1.85; color:var(--body); margin-bottom:16px; }
+
+.proc-quote {
+  font-family:var(--m); font-size:12px; color:var(--cyan);
+  padding:10px 16px; background:rgba(56,232,212,.06);
+  border-left:2px solid var(--cyan); line-height:1.5;
+}
+
+/* ── DEPLOY ───────────────────────── */
+.deploy { display:grid; grid-template-columns:1fr 1fr; gap:3px; }
+
+.dep {
+  background:var(--card); border:1px solid var(--border);
+  padding:52px; position:relative; overflow:hidden;
+  transition:background .25s, border-color .25s;
+}
+.dep:hover { background:var(--card-hi); border-color:var(--border-hi); }
+
+.dep-icon { font-size:44px; margin-bottom:24px; }
+.dep-name { font-family:var(--r); font-size:32px; font-weight:700; margin-bottom:8px; }
+.dep-label { font-family:var(--m); font-size:10px; letter-spacing:2.5px; color:var(--cyan); margin-bottom:18px; text-transform:uppercase; }
+
+.dep-desc { font-size:15px; line-height:1.85; color:var(--body); }
+
+/* ── RESULT BANNER ────────────────── */
+.result {
+  margin:3px 0;
+  background:linear-gradient(135deg, #0F1C28 0%, #0D1520 100%);
+  border:1px solid rgba(56,232,212,.2);
+  padding:96px 80px; text-align:center; position:relative; overflow:hidden;
+}
+.result::before {
+  content:''; position:absolute; inset:0;
+  background:radial-gradient(ellipse 60% 60% at 50% 50%, rgba(56,232,212,.06) 0%, transparent 70%);
+  pointer-events:none;
+}
+.result-title { font-family:var(--r); font-size:clamp(40px,5vw,68px); font-weight:900; letter-spacing:-2px; margin-bottom:20px; }
+.result-title span { color:var(--cyan); font-style:italic; }
+
+.result-body {
+  font-size:18px; line-height:1.8; color:var(--body);
+  max-width:580px; margin:0 auto 48px;
+}
+
+.result-pills { display:flex; flex-wrap:wrap; gap:12px; justify-content:center; }
+.pill {
+  padding:10px 24px; border:1px solid rgba(56,232,212,.3);
+  font-family:var(--m); font-size:11px; color:var(--cyan);
+  letter-spacing:2px; text-transform:uppercase;
+  transition:all .2s;
+}
+.pill:hover { background:rgba(56,232,212,.1); border-color:var(--cyan); }
+
+/* ── FOOTER ───────────────────────── */
+footer {
+  border-top:1px solid var(--border);
+  padding:40px 48px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.ft-l { font-family:var(--m); font-size:10px; letter-spacing:3px; color:var(--faint); text-transform:uppercase; }
+.ft-r { font-family:var(--m); font-size:10px; letter-spacing:2px; color:var(--faint); }
+
+/* ── DIVIDER ──────────────────────── */
+.div { height:1px; background:linear-gradient(90deg,transparent,var(--border),transparent); }
+
+/* ── ANIMATIONS ───────────────────── */
+@keyframes up { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.reveal { opacity:0; transform:translateY(32px); transition:opacity .65s ease, transform .65s ease; }
+.reveal.vis { opacity:1; transform:translateY(0); }
+
+/* ── RESPONSIVE ───────────────────── */
+@media(max-width:900px) {
+  .wrap { padding:0 24px; }
+  nav { padding:16px 24px; }
+  .nav-links { display:none; }
+  .arch { grid-template-columns:1fr; }
+  .process { grid-template-columns:1fr; }
+  .deploy { grid-template-columns:1fr; }
+  .bstep { grid-template-columns:72px 1fr; }
+  .bstep-letter { font-size:52px; padding:28px 12px; }
+  .bstep-body { padding:24px 28px; }
+  .result { padding:64px 32px; }
+  .hero-stats { gap:28px; }
+}
+</style>
+</head>
+<body>
+
+<div class="cur" id="cur"></div>
+<div class="cur-r" id="curR"></div>
+<div class="glow g1"></div>
+<div class="glow g2"></div>
+<div class="glow g3"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">BLAST</div>
+  <ul class="nav-links">
+    <li><a href="#framework">Framework</a></li>
+    <li><a href="#tools">Ferramentas</a></li>
+    <li><a href="#arch">Arquitetura</a></li>
+    <li><a href="#process">Processo</a></li>
+    <li><a href="#deploy">Deploy</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<header>
+  <div class="wrap">
+    <div class="hero-eyebrow">
+      <span class="hero-eyebrow-dot"></span>
+      Vibecode System · Framework de IA
+    </div>
+    <h1 class="hero-title">
+      Build<br>
+      <em>Smarter</em>
+      <span class="ghost">with&nbsp;BLAST</span>
+    </h1>
+    <p class="hero-lead">
+      Um sistema de <strong>5 etapas</strong> que elimina erros lógicos no desenvolvimento com IA — do blueprint ao deploy, tudo construído conversando com a ferramenta.
+    </p>
+    <div class="hero-stats">
+      <div>
+        <div class="stat-n">5</div>
+        <div class="stat-l">Etapas</div>
+      </div>
+      <div>
+        <div class="stat-n">3</div>
+        <div class="stat-l">Camadas</div>
+      </div>
+      <div>
+        <div class="stat-n">0</div>
+        <div class="stat-l">Código manual</div>
+      </div>
+    </div>
+    <div class="scroll-hint">
+      <div class="sh-line"></div>
+      Scroll para explorar
+    </div>
+  </div>
+</header>
+
+<!-- FRAMEWORK -->
+<section id="framework">
+  <div class="wrap">
+    <div class="sec-eyebrow reveal">// 01 — O Framework</div>
+    <h2 class="sec-title reveal">As 5 Etapas do <span>BLAST</span></h2>
+
+    <div class="blast-list reveal">
+
+      <div class="bstep open" data-c="cyan" onclick="tog(this)">
+        <div class="bstep-letter">B</div>
+        <div class="bstep-body">
+          <div class="bstep-head">
+            <div class="bstep-name">Blueprint — Plano</div>
+            <div class="bstep-badge">// ETAPA 01</div>
+          </div>
+          <p class="bstep-summary">Define toda a lógica em linguagem natural antes de escrever código. Responde às 5 perguntas essenciais que orientam o projeto inteiro.</p>
+          <div class="bstep-expand">
+            <div class="bstep-inner">
+              <p class="bstep-detail">O Blueprint funciona como a fundação do projeto. Sem ele, a IA toma decisões que parecem corretas localmente, mas quebram o sistema globalmente. Pense nele como o contrato entre você e a ferramenta — uma vez definido, toda decisão posterior se ancora nele.</p>
+              <div class="chips">
+                <span class="chip">🎯 North Star — objetivo principal</span>
+                <span class="chip">🔗 Serviços externos</span>
+                <span class="chip">🗄️ Fonte da verdade</span>
+                <span class="chip">📦 Formato de entrega</span>
+                <span class="chip">📋 Regras de comportamento</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bstep" data-c="violet" onclick="tog(this)">
+        <div class="bstep-letter">L</div>
+        <div class="bstep-body">
+          <div class="bstep-head">
+            <div class="bstep-name">Links — Conectividade</div>
+            <div class="bstep-badge">// ETAPA 02</div>
+          </div>
+          <p class="bstep-summary">Testa todas as conexões de API e credenciais antes de começar a codificar. O "handshake" que garante que serviços externos vão se comunicar.</p>
+          <div class="bstep-expand">
+            <div class="bstep-inner">
+              <p class="bstep-detail">Validar conexões antes de construir evita horas de debug. Se uma API falha apenas no final do desenvolvimento, todo o esforço investido nas etapas anteriores fica comprometido. Links é o seguro do projeto.</p>
+              <div class="chips">
+                <span class="chip">✅ Teste de APIs antes de codificar</span>
+                <span class="chip">🔑 Validação de credenciais</span>
+                <span class="chip">🤝 Handshake verification</span>
+                <span class="chip">⏱️ Referência @ min 09:30</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bstep" data-c="amber" onclick="tog(this)">
+        <div class="bstep-letter">A</div>
+        <div class="bstep-body">
+          <div class="bstep-head">
+            <div class="bstep-name">Architecture — Arquitetura</div>
+            <div class="bstep-badge">// ETAPA 03</div>
+          </div>
+          <p class="bstep-summary">Divide o app em três camadas distintas: SOPs, Navegação e Ferramentas. Cada camada tem responsabilidade única — a IA nunca precisa adivinhar.</p>
+          <div class="bstep-expand">
+            <div class="bstep-inner">
+              <p class="bstep-detail">A separação em camadas é o que torna o sistema previsível e auditável. Cada camada tem uma linguagem própria e escopo bem delimitado, o que reduz alucinações e torna o comportamento da IA determinístico.</p>
+              <div class="chips">
+                <span class="chip">📝 Camada 1 — SOPs em Markdown</span>
+                <span class="chip">🧠 Camada 2 — Raciocínio da IA</span>
+                <span class="chip">🐍 Camada 3 — Scripts Python determinísticos</span>
+                <span class="chip">⏱️ Referência @ min 21:31</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bstep" data-c="green" onclick="tog(this)">
+        <div class="bstep-letter">S</div>
+        <div class="bstep-body">
+          <div class="bstep-head">
+            <div class="bstep-name">Stylize — Estilização</div>
+            <div class="bstep-badge">// ETAPA 04</div>
+          </div>
+          <p class="bstep-summary">Refina o design usando referências visuais e componentes prontos. A técnica de UI Sniping transforma prints do Dribbble em interfaces profissionais.</p>
+          <div class="bstep-expand">
+            <div class="bstep-inner">
+              <p class="bstep-detail">UI Sniping: capture prints de sites que você admira e entregue à IA como referência visual. Ela absorve o estilo — espaçamento, paleta, tipografia — e reproduz fielmente sem que você precise de um designer contratado.</p>
+              <div class="chips">
+                <span class="chip">🎨 UI Sniping como método</span>
+                <span class="chip">📸 Referências visuais do Dribbble</span>
+                <span class="chip">🧩 Componentes prontos reutilizáveis</span>
+                <span class="chip">✨ Design profissional sem designer</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bstep" data-c="red" onclick="tog(this)">
+        <div class="bstep-letter">T</div>
+        <div class="bstep-body">
+          <div class="bstep-head">
+            <div class="bstep-name">Trigger — Deploy</div>
+            <div class="bstep-badge">// ETAPA 05</div>
+          </div>
+          <p class="bstep-summary">Coloca o app no ar e configura automações que rodam sozinhas na nuvem. Do GitHub ao Vercel, gerenciado pela IA via MCP sem intervenção manual.</p>
+          <div class="bstep-expand">
+            <div class="bstep-inner">
+              <p class="bstep-detail">A fase final conecta GitHub → Vercel automaticamente. Variáveis de ambiente e chaves de API são configuradas de forma segura por dentro do AntiGravity via MCP da Vercel — sem abrir um terminal ou expor credenciais.</p>
+              <div class="chips">
+                <span class="chip">🐙 GitHub auto-commit</span>
+                <span class="chip">▲ Deploy na Vercel via MCP</span>
+                <span class="chip">🔐 ENV variables seguras</span>
+                <span class="chip">⚡ Automações agendadas na nuvem</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="div"></div>
+
+<!-- TOOLS -->
+<section id="tools">
+  <div class="wrap">
+    <div class="sec-eyebrow reveal">// 02 — Ecossistema</div>
+    <h2 class="sec-title reveal">As Ferramentas<br>do <span>Vibecode</span></h2>
+
+    <div class="tools-grid reveal">
+
+      <div class="tool" data-c="cyan">
+        <div class="tool-bar"></div>
+        <div class="tool-emoji">🌐</div>
+        <div class="tool-name">AntiGravity</div>
+        <div class="tool-role">Plataforma principal · Google</div>
+        <p class="tool-desc">Ambiente de desenvolvimento baseado em agentes de IA com modelos Gemini. O hub central onde Blueprint, código, design e deploy acontecem numa única conversa.</p>
+      </div>
+
+      <div class="tool" data-c="violet">
+        <div class="tool-bar"></div>
+        <div class="tool-emoji">🔗</div>
+        <div class="tool-name">MCP</div>
+        <div class="tool-role">Model Context Protocol</div>
+        <p class="tool-desc">Conecta a IA diretamente ao Notion e ao Supabase sem configurar APIs manualmente. Elimina toda a friction de integração — a IA fala diretamente com os serviços.</p>
+      </div>
+
+      <div class="tool" data-c="amber">
+        <div class="tool-bar"></div>
+        <div class="tool-emoji">🧠</div>
+        <div class="tool-name">Poppy AI</div>
+        <div class="tool-role">Análise de conteúdo</div>
+        <p class="tool-desc">O cérebro para analisar vídeos do YouTube e gerar roteiros e ganchos virais. Transforma conteúdo existente em insights e scripts prontos para publicação.</p>
+      </div>
+
+      <div class="tool" data-c="green">
+        <div class="tool-bar"></div>
+        <div class="tool-emoji">⚡</div>
+        <div class="tool-name">Modal.com</div>
+        <div class="tool-role">Scraping agendado</div>
+        <p class="tool-desc">Roda scripts de raspagem do Reddit e YouTube de forma automática e agendada. Coleta de dados 24/7 sem qualquer intervenção — o app trabalha enquanto você dorme.</p>
+      </div>
+
+      <div class="tool" data-c="red">
+        <div class="tool-bar"></div>
+        <div class="tool-emoji">🗄️</div>
+        <div class="tool-name">Supabase</div>
+        <div class="tool-role">Memória permanente</div>
+        <p class="tool-desc">Banco de dados que dá memória real e persistente à aplicação. Posts encontrados pela IA, preferências e histórico ficam salvos e disponíveis entre sessões.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="div"></div>
+
+<!-- ARCHITECTURE -->
+<section id="arch">
+  <div class="wrap">
+    <div class="sec-eyebrow reveal">// 03 — As 3 Camadas</div>
+    <h2 class="sec-title reveal">Arquitetura<br><span>em Camadas</span></h2>
+
+    <div class="arch reveal">
+
+      <div class="arch-card">
+        <div class="arch-num">CAMADA 01</div>
+        <div class="arch-ring">📋</div>
+        <div class="arch-name">SOPs</div>
+        <div class="arch-tech">// Regras Técnicas</div>
+        <p class="arch-desc">Procedimentos operacionais padrão escritos em Markdown. Define as regras que a IA deve seguir em cada situação — o manual de instruções imutável do sistema.</p>
+      </div>
+
+      <div class="arch-card">
+        <div class="arch-num">CAMADA 02</div>
+        <div class="arch-ring">🧠</div>
+        <div class="arch-name">Navegação</div>
+        <div class="arch-tech">// Raciocínio da IA</div>
+        <p class="arch-desc">A camada de tomada de decisão. O raciocínio que decide qual ferramenta usar em cada momento — o "GPS" que conecta a intenção do usuário à ação correta.</p>
+      </div>
+
+      <div class="arch-card">
+        <div class="arch-num">CAMADA 03</div>
+        <div class="arch-ring">⚙️</div>
+        <div class="arch-name">Ferramentas</div>
+        <div class="arch-tech">// Scripts Python</div>
+        <p class="arch-desc">Scripts Python determinísticos para tarefas específicas. Execução previsível e auditável — sem improviso, sem alucinação, resultados consistentes toda vez.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="div"></div>
+
+<!-- PROCESS -->
+<section id="process">
+  <div class="wrap">
+    <div class="sec-eyebrow reveal">// 04 — Processo</div>
+    <h2 class="sec-title reveal">Como Funciona<br><span>na Prática</span></h2>
+
+    <div class="process reveal">
+
+      <div class="proc">
+        <div class="proc-n">01</div>
+        <div>
+          <div class="proc-name">Configuração do Ambiente</div>
+          <p class="proc-desc">Cria uma pasta no AntiGravity e cola o prompt de sistema que define a IA como um "System Pilot" — o ponto de partida que ancora todas as decisões seguintes.</p>
+          <div class="proc-quote">// Define IA como "System Pilot"</div>
+        </div>
+      </div>
+
+      <div class="proc">
+        <div class="proc-n">02</div>
+        <div>
+          <div class="proc-name">Referência de Design</div>
+          <p class="proc-desc">UI Sniping: prints de sites bonitos do Dribbble são entregues à IA como referência visual. Design profissional sem precisar contratar um designer — só conversa.</p>
+          <div class="proc-quote">// "Imite este estilo visual"</div>
+        </div>
+      </div>
+
+      <div class="proc">
+        <div class="proc-n">03</div>
+        <div>
+          <div class="proc-name">Integração de Dados</div>
+          <p class="proc-desc">Conexão do Supabase via MCP para que a aplicação tenha memória permanente real. Posts encontrados pela IA, configurações e histórico ficam salvos definitivamente.</p>
+          <div class="proc-quote">// Persistência de dados permanente</div>
+        </div>
+      </div>
+
+      <div class="proc">
+        <div class="proc-n">04</div>
+        <div>
+          <div class="proc-name">Ajustes Iterativos</div>
+          <p class="proc-desc">Recursos são adicionados em linguagem natural: "adicione upload de foto de perfil" ou "crie uma seção de configurações". Cada pedido, um ciclo de melhoria.</p>
+          <div class="proc-quote">// "Adicione a função de..."</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="div"></div>
+
+<!-- DEPLOY -->
+<section id="deploy">
+  <div class="wrap">
+    <div class="sec-eyebrow reveal">// 05 — Publicação</div>
+    <h2 class="sec-title reveal">Do Código<br><span>para o Ar</span></h2>
+
+    <div class="deploy reveal">
+
+      <div class="dep">
+        <div class="dep-icon">🐙</div>
+        <div class="dep-name">GitHub</div>
+        <div class="dep-label">Versionamento Automático</div>
+        <p class="dep-desc">A IA faz o commit de todos os arquivos automaticamente para um repositório remoto. Zero configuração manual — o histórico completo do projeto fica salvo e versionado sem você abrir um terminal.</p>
+      </div>
+
+      <div class="dep">
+        <div class="dep-icon">▲</div>
+        <div class="dep-name">Vercel</div>
+        <div class="dep-label">Hospedagem + ENV Vars</div>
+        <p class="dep-desc">Conecta o GitHub à Vercel via MCP do AntiGravity. Variáveis de ambiente e chaves de API configuradas de forma segura e automática — sem risco de exposição de credenciais sensíveis.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- RESULT -->
+<div class="wrap" style="padding-bottom:112px;">
+  <div class="result reveal">
+    <h2 class="result-title">O <span>Resultado</span> Final</h2>
+    <p class="result-body">Uma aplicação funcional completa com dashboard, chat de IA integrado e automações de dados rodando na nuvem — construída inteiramente conversando com a ferramenta.</p>
+    <div class="result-pills">
+      <span class="pill">Dashboard Completo</span>
+      <span class="pill">Chat IA Integrado</span>
+      <span class="pill">Automações na Nuvem</span>
+      <span class="pill">Dados Persistentes</span>
+      <span class="pill">Deploy Automático</span>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ft-l">BLAST Framework · Vibecode System</div>
+  <div class="ft-r">Desenvolvido com IA · 2025</div>
+</footer>
+
+<script>
+  // Cursor
+  const cur = document.getElementById('cur');
+  const curR = document.getElementById('curR');
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; cur.style.left=mx+'px'; cur.style.top=my+'px'; });
+  (function tick(){ rx+=(mx-rx)*.11; ry+=(my-ry)*.11; curR.style.left=rx+'px'; curR.style.top=ry+'px'; requestAnimationFrame(tick); })();
+
+  document.querySelectorAll('.bstep,.tool,.arch-card,.dep,.proc').forEach(el => {
+    el.addEventListener('mouseenter',()=>{ cur.style.width='18px'; cur.style.height='18px'; curR.style.width='52px'; curR.style.height='52px'; });
+    el.addEventListener('mouseleave',()=>{ cur.style.width='10px'; cur.style.height='10px'; curR.style.width='36px'; curR.style.height='36px'; });
+  });
+
+  // Accordion
+  function tog(el) {
+    const was = el.classList.contains('open');
+    document.querySelectorAll('.bstep').forEach(s => s.classList.remove('open'));
+    if (!was) el.classList.add('open');
+  }
+
+  // Reveal on scroll
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach((e,i) => { if(e.isIntersecting) setTimeout(()=>e.target.classList.add('vis'), i*60); });
+  }, { threshold:0.08 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+  // Smooth nav
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => { e.preventDefault(); document.querySelector(a.getAttribute('href'))?.scrollIntoView({behavior:'smooth'}); });
+  });
+</script>
+</body>
+</html>
