@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BF Protocol — Dashboard de Recomposição</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --surface: #111418;
+    --surface2: #181c22;
+    --border: #222730;
+    --accent: #c8f542;
+    --accent2: #42f5a8;
+    --accent3: #f5a842;
+    --danger: #f54242;
+    --text: #e8edf5;
+    --muted: #6b7585;
+    --card-pad: 28px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Instrument Sans', sans-serif;
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* GRID NOISE BACKGROUND */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(200,245,66,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,245,66,0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 40px 24px; position: relative; z-index: 1; }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 48px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .logo-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: var(--accent);
+  }
+
+  .logo-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    padding: 4px 12px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  /* TWO-COLUMN LAYOUT */
+  .layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: var(--card-pad);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(200,245,66,0.3), transparent);
+  }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-title .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  /* FORM */
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  label {
+    display: block;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  input, select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(200,245,66,0.1);
+  }
+
+  select option { background: var(--surface2); }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .section-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 20px 0 12px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .btn {
+    width: 100%;
+    background: var(--accent);
+    color: #0a0c0f;
+    border: none;
+    border-radius: 10px;
+    padding: 14px;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 32px rgba(200,245,66,0.3);
+  }
+
+  .btn:active { transform: translateY(0); }
+
+  /* RESULTS PANEL */
+  .results-panel {
+    display: none;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .results-panel.visible { display: flex; }
+
+  /* METRICS GRID */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  @media (max-width: 700px) {
+    .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .metric {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 16px;
+    position: relative;
+  }
+
+  .metric-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .metric-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+
+  .metric-unit {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--muted);
+    margin-left: 2px;
+  }
+
+  .metric-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .accent { color: var(--accent); }
+  .accent2 { color: var(--accent2); }
+  .accent3 { color: var(--accent3); }
+  .danger { color: var(--danger); }
+
+  /* MACROS BAR */
+  .macros-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .macro-card {
+    background: var(--surface2);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+
+  .macro-icon {
+    font-size: 22px;
+    margin-bottom: 6px;
+  }
+
+  .macro-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+  }
+
+  .macro-grams {
+    font-family: 'Syne', sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+  }
+
+  .macro-kcal {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* MACRO VISUAL BAR */
+  .macro-bar-wrap { margin-top: 16px; }
+
+  .macro-bar {
+    height: 8px;
+    border-radius: 8px;
+    background: var(--border);
+    overflow: hidden;
+    display: flex;
+    gap: 2px;
+  }
+
+  .macro-bar-seg {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .bar-legend {
+    display: flex;
+    gap: 16px;
+    margin-top: 8px;
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+  }
+
+  .bar-legend span { display: flex; align-items: center; gap: 4px; }
+  .bar-legend .dot { width: 8px; height: 8px; border-radius: 2px; }
+
+  /* CHART */
+  .chart-wrap {
+    position: relative;
+    height: 240px;
+  }
+
+  /* ALERTS */
+  .alerts {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .alert-warning {
+    background: rgba(245,168,66,0.08);
+    border: 1px solid rgba(245,168,66,0.25);
+  }
+
+  .alert-danger {
+    background: rgba(245,66,66,0.08);
+    border: 1px solid rgba(245,66,66,0.25);
+  }
+
+  .alert-ok {
+    background: rgba(200,245,66,0.06);
+    border: 1px solid rgba(200,245,66,0.2);
+  }
+
+  .alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+  .alert strong {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 2px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* TIMELINE */
+  .timeline {
+    position: relative;
+    padding-left: 20px;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 5px; top: 8px; bottom: 8px;
+    width: 1px;
+    background: var(--border);
+  }
+
+  .timeline-item {
+    position: relative;
+    margin-bottom: 16px;
+    padding-left: 16px;
+  }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -19px;
+    top: 6px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    border: 2px solid var(--surface);
+  }
+
+  .timeline-item.active::before { background: var(--accent); }
+  .timeline-item.mid::before { background: var(--accent3); }
+
+  .timeline-week {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .timeline-desc {
+    font-size: 13px;
+    margin-top: 2px;
+  }
+
+  /* STAGNATION */
+  .stagnation-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .stagnation-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .option {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 12px;
+  }
+
+  .option-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  /* PLACEHOLDER */
+  .placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--muted);
+    border: 1px dashed var(--border);
+    border-radius: 16px;
+  }
+
+  .placeholder-icon { font-size: 40px; margin-bottom: 16px; opacity: 0.4; }
+
+  .placeholder h3 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 8px;
+    color: var(--text);
+    opacity: 0.4;
+  }
+
+  .placeholder p { font-size: 13px; opacity: 0.5; max-width: 280px; }
+
+  /* WEEK TABLE */
+  .week-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .week-table th {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .week-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(34,39,48,0.5);
+    font-family: 'DM Mono', monospace;
+  }
+  .week-table tr:last-child td { border-bottom: none; }
+  .week-table tr.highlight td { background: rgba(200,245,66,0.04); }
+  .week-table tr.refeed td { background: rgba(245,168,66,0.05); }
+
+  .tag {
+    display: inline-block;
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-left: 4px;
+  }
+
+  .tag-refeed { background: rgba(245,168,66,0.15); color: var(--accent3); }
+  .tag-protein { background: rgba(66,245,168,0.12); color: var(--accent2); }
+
+  /* Animate in */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate { animation: fadeUp 0.5s ease forwards; }
+  .animate-d1 { animation-delay: 0.05s; opacity: 0; }
+  .animate-d2 { animation-delay: 0.1s; opacity: 0; }
+  .animate-d3 { animation-delay: 0.15s; opacity: 0; }
+  .animate-d4 { animation-delay: 0.2s; opacity: 0; }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0 16px;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="logo">
+      <div>
+        <div class="logo-title">BF PROTOCOL</div>
+        <div class="logo-sub">Dashboard de Recomposição Corporal</div>
+      </div>
+    </div>
+    <div class="badge">v2.0 — Lucas Campos Method</div>
+  </header>
+
+  <div class="layout">
+    <!-- INPUT PANEL -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Dados Pessoais</div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Sexo</label>
+          <select id="sexo">
+            <option value="m">Masculino</option>
+            <option value="f">Feminino</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Idade</label>
+          <input type="number" id="idade" placeholder="25" min="15" max="80">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Peso (kg)</label>
+          <input type="number" id="peso" placeholder="90" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Altura (cm)</label>
+          <input type="number" id="altura" placeholder="175">
+        </div>
+      </div>
+
+      <div class="section-label">Dobras Cutâneas (cm)</div>
+
+      <div id="dobras-m">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Peitoral</label>
+            <input type="number" id="peitoral" placeholder="1.5" step="0.1">
+          </div>
+          <div class="form-group">
+            <label>Abdominal</label>
+            <input type="number" id="abdominal" placeholder="2.5" step="0.1">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Coxa</label>
+          <input type="number" id="coxa" placeholder="2.0" step="0.1">
+        </div>
+      </div>
+
+      <div id="dobras-f" style="display:none;">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tríceps</label>
+            <input type="number" id="triceps" placeholder="2.0" step="0.1">
+          </div>
+          <div class="form-group">
+            <label>Suprailíaca</label>
+            <input type="number" id="suprail" placeholder="2.5" step="0.1">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Coxa (Fem.)</label>
+          <input type="number" id="coxa_f" placeholder="3.0" step="0.1">
+        </div>
+      </div>
+
+      <div class="section-label">Nível de Atividade</div>
+
+      <div class="form-group">
+        <label>Fator Atividade</label>
+        <select id="atividade">
+          <option value="1.5" selected>Moderado — Musculação 4x/sem</option>
+          <option value="1.375">Leve — 1-3x/sem</option>
+          <option value="1.725">Alto — 6-7x/sem</option>
+        </select>
+      </div>
+
+      <button class="btn" onclick="calcular()">⚡ CALCULAR PROTOCOLO</button>
+    </div>
+
+    <!-- RESULTS PANEL -->
+    <div id="placeholder" class="placeholder">
+      <div class="placeholder-icon">📊</div>
+      <h3>Aguardando Dados</h3>
+      <p>Preencha seu perfil ao lado e clique em Calcular para gerar seu protocolo personalizado.</p>
+    </div>
+
+    <div class="results-panel" id="results">
+
+      <!-- COMPOSIÇÃO ATUAL -->
+      <div class="card animate animate-d1">
+        <div class="card-title"><span class="dot"></span>Composição Corporal Atual</div>
+        <div class="metrics-grid">
+          <div class="metric">
+            <div class="metric-label">% Gordura</div>
+            <div class="metric-value danger" id="r-bf">—</div>
+            <div class="metric-sub">Estimado (3 dobras)</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Massa Magra</div>
+            <div class="metric-value accent2" id="r-mm">—</div>
+            <div class="metric-sub" id="r-mm-kg">kg</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Massa Gorda</div>
+            <div class="metric-value accent3" id="r-mg">—</div>
+            <div class="metric-sub" id="r-mg-kg">kg</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">TMB (Tinsley)</div>
+            <div class="metric-value" id="r-tmb">—</div>
+            <div class="metric-sub">kcal/dia</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">GET Total</div>
+            <div class="metric-value" id="r-get">—</div>
+            <div class="metric-sub">kcal/dia</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Deficit/dia</div>
+            <div class="metric-value accent" id="r-deficit">—</div>
+            <div class="metric-sub">kcal</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- META & TEMPO -->
+      <div class="card animate animate-d2">
+        <div class="card-title"><span class="dot" style="background:var(--accent2)"></span>Projeção de Meta</div>
+        <div class="metrics-grid">
+          <div class="metric">
+            <div class="metric-label">Peso Alvo</div>
+            <div class="metric-value accent2" id="r-palvo">—</div>
+            <div class="metric-sub">para 10% BF</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Gordura a Perder</div>
+            <div class="metric-value accent3" id="r-gordura">—</div>
+            <div class="metric-sub">kg totais</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Duração</div>
+            <div class="metric-value accent" id="r-semanas">—</div>
+            <div class="metric-sub">semanas estimadas</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Perda/semana</div>
+            <div class="metric-value" id="r-perda-sem">—</div>
+            <div class="metric-sub">1,5% peso corporal</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Calorias Alvo</div>
+            <div class="metric-value" id="r-cal-alvo">—</div>
+            <div class="metric-sub">kcal/dia</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Conclusão Est.</div>
+            <div class="metric-value" id="r-data" style="font-size:16px">—</div>
+            <div class="metric-sub">data estimada</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MACROS -->
+      <div class="card animate animate-d2">
+        <div class="card-title"><span class="dot" style="background:var(--accent3)"></span>Distribuição de Macronutrientes</div>
+        <div class="macros-row">
+          <div class="macro-card">
+            <div class="macro-icon">🥩</div>
+            <div class="macro-name">Proteína</div>
+            <div class="macro-grams accent2" id="r-prot">—<span style="font-size:14px;font-weight:400">g</span></div>
+            <div class="macro-kcal" id="r-prot-kcal">— kcal</div>
+          </div>
+          <div class="macro-card">
+            <div class="macro-icon">🥑</div>
+            <div class="macro-name">Gorduras</div>
+            <div class="macro-grams accent3" id="r-fat">—<span style="font-size:14px;font-weight:400">g</span></div>
+            <div class="macro-kcal" id="r-fat-kcal">— kcal</div>
+          </div>
+          <div class="macro-card">
+            <div class="macro-icon">🍚</div>
+            <div class="macro-name">Carboidratos</div>
+            <div class="macro-grams accent" id="r-carb">—<span style="font-size:14px;font-weight:400">g</span></div>
+            <div class="macro-kcal" id="r-carb-kcal">— kcal</div>
+          </div>
+        </div>
+        <div class="macro-bar-wrap">
+          <div class="macro-bar">
+            <div class="macro-bar-seg" id="bar-p" style="background:var(--accent2); width:0%"></div>
+            <div class="macro-bar-seg" id="bar-f" style="background:var(--accent3); width:0%"></div>
+            <div class="macro-bar-seg" id="bar-c" style="background:var(--accent); width:0%"></div>
+          </div>
+          <div class="bar-legend">
+            <span><span class="dot" style="background:var(--accent2)"></span>Proteína</span>
+            <span><span class="dot" style="background:var(--accent3)"></span>Gordura</span>
+            <span><span class="dot" style="background:var(--accent)"></span>Carb</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHART -->
+      <div class="card animate animate-d3">
+        <div class="card-title"><span class="dot" style="background:var(--accent)"></span>Curva de Progresso Estimada</div>
+        <div class="chart-wrap">
+          <canvas id="progressChart"></canvas>
+        </div>
+      </div>
+
+      <!-- WEEK TABLE -->
+      <div class="card animate animate-d3">
+        <div class="card-title"><span class="dot" style="background:var(--accent2)"></span>Cronograma Semanal</div>
+        <div style="overflow-x:auto;">
+          <table class="week-table" id="week-table">
+            <thead>
+              <tr>
+                <th>Semana</th>
+                <th>Peso Est.</th>
+                <th>% BF Est.</th>
+                <th>Evento</th>
+              </tr>
+            </thead>
+            <tbody id="week-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- STAGNATION -->
+      <div class="card animate animate-d4">
+        <div class="card-title"><span class="dot" style="background:var(--accent3)"></span>Protocolo Anti-Estagnação</div>
+        <div class="stagnation-box">
+          <div class="stagnation-title">⚠️ Se o peso não cair por 2+ semanas:</div>
+          <div class="options-grid">
+            <div class="option">
+              <div class="option-label">Opção A — Dieta</div>
+              Reduzir <strong class="accent">200 kcal/dia</strong> nos carboidratos
+            </div>
+            <div class="option">
+              <div class="option-label">Opção B — Cardio</div>
+              Adicionar <strong class="accent3">2-3 sessões</strong> de cardio moderado (30 min)
+            </div>
+            <div class="option">
+              <div class="option-label">Opção C — Refeed</div>
+              1 dia de <strong class="accent2">manutenção calórica</strong> para reset hormonal
+            </div>
+            <div class="option">
+              <div class="option-label">Opção D — Proteína</div>
+              Subir proteína para <strong class="accent">2,0g/kg</strong> após semana 10
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALERTS -->
+      <div class="card animate animate-d4">
+        <div class="card-title"><span class="dot" style="background:var(--danger)"></span>Alertas do Protocolo</div>
+        <div class="alerts" id="alerts-box">
+        </div>
+      </div>
+
+    </div><!-- end results -->
+  </div><!-- end layout -->
+</div>
+
+<script>
+let chartInstance = null;
+
+document.getElementById('sexo').addEventListener('change', function() {
+  const sexo = this.value;
+  document.getElementById('dobras-m').style.display = sexo === 'm' ? 'block' : 'none';
+  document.getElementById('dobras-f').style.display = sexo === 'f' ? 'block' : 'none';
+});
+
+function calcular() {
+  const sexo = document.getElementById('sexo').value;
+  const idade = parseFloat(document.getElementById('idade').value);
+  const peso = parseFloat(document.getElementById('peso').value);
+  const altura = parseFloat(document.getElementById('altura').value);
+  const fatorAtividade = parseFloat(document.getElementById('atividade').value);
+
+  if (!idade || !peso || !altura) {
+    alert('Por favor, preencha todos os campos obrigatórios.');
+    return;
+  }
+
+  let densidadeCorporal, percGordura;
+
+  if (sexo === 'm') {
+    // Inputs em cm → converter para mm (*10) para fórmula Jackson & Pollock
+    const peitoral = (parseFloat(document.getElementById('peitoral').value) || 1.5) * 10;
+    const abdominal = (parseFloat(document.getElementById('abdominal').value) || 2.5) * 10;
+    const coxa = (parseFloat(document.getElementById('coxa').value) || 2.0) * 10;
+    const soma3 = peitoral + abdominal + coxa;
+    // Jackson & Pollock 3 dobras masculino
+    densidadeCorporal = 1.10938 - (0.0008267 * soma3) + (0.0000016 * soma3 * soma3) - (0.0002574 * idade);
+  } else {
+    // Inputs em cm → converter para mm (*10)
+    const triceps = (parseFloat(document.getElementById('triceps').value) || 2.0) * 10;
+    const suprail = (parseFloat(document.getElementById('suprail').value) || 2.5) * 10;
+    const coxa_f = (parseFloat(document.getElementById('coxa_f').value) || 3.0) * 10;
+    const soma3 = triceps + suprail + coxa_f;
+    // Jackson & Pollock 3 dobras feminino
+    densidadeCorporal = 1.0994921 - (0.0009929 * soma3) + (0.0000023 * soma3 * soma3) - (0.0001392 * idade);
+  }
+
+  // Siri equation
+  percGordura = ((4.95 / densidadeCorporal) - 4.50) * 100;
+  percGordura = Math.max(5, Math.min(50, percGordura));
+
+  const massaGorda = (percGordura / 100) * peso;
+  const massaMagra = peso - massaGorda;
+
+  // Tinsley formula (ideal para quem treina força)
+  const tmb = (21.6 * massaMagra) + 370;
+  const get = tmb * fatorAtividade;
+
+  const deficit = sexo === 'm' ? 1000 : 650;
+  const calAlvo = Math.round(get - deficit);
+
+  // Meta: 10% BF com 99% massa magra preservada
+  const massaMagraAlvo = massaMagra * 0.99;
+  const pesoAlvo = massaMagraAlvo / 0.90;
+  const gorduraAPerder = peso - pesoAlvo;
+
+  // 1.5% do peso por semana
+  const perdaSemanaPct = 0.015;
+  const perdaSemanaKg = peso * perdaSemanaPct;
+
+  // Semanas = gordura / perda semanal
+  const semanas = Math.ceil(gorduraAPerder / perdaSemanaKg);
+
+  // Macros
+  const protg = sexo === 'm' ? 1.6 : 1.6; // g/kg
+  const protTotal = protg * peso;
+  const protKcal = protTotal * 4;
+
+  const fatPct = sexo === 'm' ? 0.18 : 0.20;
+  const fatKcal = calAlvo * fatPct;
+  const fatTotal = fatKcal / 9;
+
+  const carbKcal = calAlvo - protKcal - fatKcal;
+  const carbTotal = carbKcal / 4;
+
+  // Data estimada
+  const hoje = new Date();
+  const dataFim = new Date(hoje.getTime() + semanas * 7 * 24 * 60 * 60 * 1000);
+  const dataStr = dataFim.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  // UPDATE UI
+  const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+
+  set('r-bf', percGordura.toFixed(1) + '%');
+  set('r-mm', massaMagra.toFixed(1));
+  set('r-mm-kg', 'kg massa magra');
+  set('r-mg', massaGorda.toFixed(1));
+  set('r-mg-kg', 'kg gordura');
+  set('r-tmb', Math.round(tmb).toLocaleString());
+  set('r-get', Math.round(get).toLocaleString());
+  set('r-deficit', deficit.toLocaleString());
+
+  set('r-palvo', pesoAlvo.toFixed(1) + ' kg');
+  set('r-gordura', gorduraAPerder.toFixed(1) + ' kg');
+  set('r-semanas', semanas);
+  set('r-perda-sem', perdaSemanaKg.toFixed(2) + ' kg');
+  set('r-cal-alvo', calAlvo.toLocaleString() + ' kcal');
+  set('r-data', dataStr);
+
+  set('r-prot', Math.round(protTotal) + 'g');
+  set('r-prot-kcal', Math.round(protKcal) + ' kcal (' + Math.round(protKcal/calAlvo*100) + '%)');
+  set('r-fat', Math.round(fatTotal) + 'g');
+  set('r-fat-kcal', Math.round(fatKcal) + ' kcal (' + Math.round(fatPct*100) + '%)');
+  set('r-carb', Math.round(carbTotal) + 'g');
+  set('r-carb-kcal', Math.round(carbKcal) + ' kcal (' + Math.round(carbKcal/calAlvo*100) + '%)');
+
+  // MACRO BAR — reset first then animate
+  const pPct = protKcal / calAlvo * 100;
+  const fPct = fatKcal / calAlvo * 100;
+  const cPct = carbKcal / calAlvo * 100;
+  document.getElementById('bar-p').style.transition = 'none';
+  document.getElementById('bar-f').style.transition = 'none';
+  document.getElementById('bar-c').style.transition = 'none';
+  document.getElementById('bar-p').style.width = '0%';
+  document.getElementById('bar-f').style.width = '0%';
+  document.getElementById('bar-c').style.width = '0%';
+  setTimeout(() => {
+    document.getElementById('bar-p').style.transition = 'width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)';
+    document.getElementById('bar-f').style.transition = 'width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)';
+    document.getElementById('bar-c').style.transition = 'width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)';
+    document.getElementById('bar-p').style.width = pPct + '%';
+    document.getElementById('bar-f').style.width = fPct + '%';
+    document.getElementById('bar-c').style.width = cPct + '%';
+  }, 50);
+
+  // CHART
+  buildChart(peso, massaMagra, semanas, perdaSemanaKg);
+
+  // WEEK TABLE
+  buildTable(peso, percGordura, semanas, perdaSemanaKg, massaMagra);
+
+  // ALERTS
+  buildAlerts(semanas, percGordura, sexo);
+
+  // SHOW / REFRESH RESULTS — always re-render on every calcular() call
+  document.getElementById('placeholder').style.display = 'none';
+  const resultsEl = document.getElementById('results');
+  resultsEl.classList.add('visible');
+  // Re-trigger animations by cycling the class
+  resultsEl.querySelectorAll('.animate').forEach(el => {
+    el.style.animation = 'none';
+    el.offsetHeight; // reflow
+    el.style.animation = '';
+  });
+}
+
+function buildChart(pesoInicial, massaMagra, semanas, perdaSemana) {
+  const labels = [];
+  const pesos = [];
+  const gorduras = [];
+
+  for (let s = 0; s <= semanas; s++) {
+    labels.push('Sem ' + s);
+    const pesoAtual = Math.max(pesoInicial - (perdaSemana * s), massaMagra * 0.99 / 0.90);
+    const gorduraAtual = pesoAtual - massaMagra * (1 - 0.01 * Math.min(s, semanas) / semanas * 1);
+    pesos.push(parseFloat(pesoAtual.toFixed(1)));
+    gorduras.push(parseFloat(gorduraAtual.toFixed(1)));
+  }
+
+  const ctx = document.getElementById('progressChart').getContext('2d');
+
+  if (chartInstance) { chartInstance.destroy(); }
+
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Peso Total (kg)',
+          data: pesos,
+          borderColor: '#c8f542',
+          backgroundColor: 'rgba(200,245,66,0.08)',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 3,
+          pointBackgroundColor: '#c8f542',
+        },
+        {
+          label: 'Gordura (kg)',
+          data: gorduras,
+          borderColor: '#f5a842',
+          backgroundColor: 'rgba(245,168,66,0.05)',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 3,
+          pointBackgroundColor: '#f5a842',
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: {
+            color: '#6b7585',
+            font: { family: 'DM Mono', size: 11 }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#6b7585', font: { family: 'DM Mono', size: 10 }, maxTicksLimit: 8 },
+          grid: { color: 'rgba(34,39,48,0.8)' }
+        },
+        y: {
+          ticks: { color: '#6b7585', font: { family: 'DM Mono', size: 10 } },
+          grid: { color: 'rgba(34,39,48,0.8)' }
+        }
+      }
+    }
+  });
+}
+
+function buildTable(pesoInicial, bfInicial, semanas, perdaSemana, massaMagra) {
+  const tbody = document.getElementById('week-tbody');
+  tbody.innerHTML = '';
+
+  for (let s = 1; s <= Math.min(semanas, 20); s++) {
+    const pesoAtual = Math.max(pesoInicial - (perdaSemana * s), massaMagra * 0.99 / 0.90);
+    const gordAtual = pesoAtual - massaMagra * 0.99;
+    const bfAtual = (gordAtual / pesoAtual * 100);
+
+    const tr = document.createElement('tr');
+    let evento = '';
+    let cls = '';
+
+    if (s === semanas) { cls = 'highlight'; evento = '🎯 Meta Atingida'; }
+    else if (s === 6 || s === 12) { cls = 'refeed'; evento = `<span class="tag tag-refeed">Refeed</span>`; }
+    else if (s === 10) { cls = 'refeed'; evento = `<span class="tag tag-protein">↑ Prot 2g/kg</span>`; }
+
+    tr.className = cls;
+    tr.innerHTML = `
+      <td>${s}</td>
+      <td>${pesoAtual.toFixed(1)} kg</td>
+      <td>${Math.max(10, bfAtual).toFixed(1)}%</td>
+      <td>${evento}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+function buildAlerts(semanas, bfInicial, sexo) {
+  const box = document.getElementById('alerts-box');
+  const alerts = [];
+
+  alerts.push({
+    type: 'ok',
+    icon: '✅',
+    title: 'Treino de Força — Obrigatório',
+    text: 'Mantenha musculação 4x/semana para preservar ~99% da massa magra durante o déficit calórico.'
+  });
+
+  alerts.push({
+    type: 'warning',
+    icon: '⚡',
+    title: 'Aumento do Apetite (após 6 semanas)',
+    text: 'É normal e esperado. Use alimentos de alto volume e baixa densidade calórica (vegetais, proteínas magras) para gerenciar a fome.'
+  });
+
+  alerts.push({
+    type: 'warning',
+    icon: '🔄',
+    title: 'Dias de Manutenção (Refeed)',
+    text: 'Após ~6 semanas e ~12 semanas: insira 1 dia de calorias de manutenção para resetar leptina e hormônios do apetite.'
+  });
+
+  alerts.push({
+    type: 'ok',
+    icon: '🥩',
+    title: 'Ajuste de Proteína — Semana 10+',
+    text: `Após a 10ª semana, suba a proteína de 1,6g/kg para 2,0g/kg para maximizar a preservação muscular no final do protocolo.`
+  });
+
+  if (bfInicial >= 25) {
+    alerts.push({
+      type: 'ok',
+      icon: '💪',
+      title: 'Vantagem do Alto BF Inicial',
+      text: 'Com BF acima de 25%, o corpo suporta déficits mais agressivos sem grandes perdas musculares. Aproveite a janela inicial.'
+    });
+  }
+
+  if (semanas > 16) {
+    alerts.push({
+      type: 'danger',
+      icon: '⚠️',
+      title: 'Protocolo Longo — Planeje Breaks',
+      text: 'Com duração acima de 16 semanas, considere fazer uma semana de manutenção a cada 8 semanas (diet break) para sustentabilidade hormonal.'
+    });
+  }
+
+  box.innerHTML = alerts.map(a => `
+    <div class="alert alert-${a.type}">
+      <div class="alert-icon">${a.icon}</div>
+      <div>
+        <strong>${a.title}</strong>
+        ${a.text}
+      </div>
+    </div>
+  `).join('');
+}
+</script>
+</body>
+</html>
